@@ -9,7 +9,7 @@ require('dotenv').config();
 const app = express();
 
 // 1. Conexión a la Base de Datos Cloud (BaaS)
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Conectado a la Base de Datos en la Nube (MongoDB Atlas)'))
     .catch(err => console.error('Error conectando a la BD:', err));
 
