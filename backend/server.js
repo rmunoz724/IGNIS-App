@@ -8,19 +8,23 @@ require('dotenv').config();
 
 const app = express();
 
-// 1. Conexión a la Base de Datos Cloud (BaaS)
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Conectado a la Base de Datos en la Nube (MongoDB Atlas)'))
     .catch(err => console.error('Error conectando a la BD:', err));
 
-// 2. BUENAS PRÁCTICAS OWASP: Seguridad de cabeceras HTTP
-app.use(helmet());
+// MODELO DE DATOS DE I.G.N.I.S.
+const reporteSchema = new mongoose.Schema({
+    latitud: { type: Number, required: true },
+    longitud: { type: Number, required: true },
+    descripcion: { type: String, required: true },
+    fecha: { type: Date, default: Date.now } // Guarda la hora exacta del reporte
+});
+const Reporte = mongoose.model('Reporte', reporteSchema);
 
-// 3. Middlewares básicos
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// 4. BUENAS PRÁCTICAS OWASP: Prevención de ataques de fuerza bruta y DDoS
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -28,18 +32,30 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-// 5. Endpoint de prueba para reportes
 app.post('/api/reportes', [
     body('latitud').isFloat({ min: -90, max: 90 }).withMessage('Latitud inválida'),
     body('longitud').isFloat({ min: -180, max: 180 }).withMessage('Longitud inválida'),
     body('descripcion').trim().escape().isLength({ max: 255 }).withMessage('Descripción muy larga o caracteres inválidos')
-], (req, res) => {
+], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    // Retorno exitoso simulando la inserción
-    res.status(201).json({ mensaje: 'Reporte validado por OWASP y registrado en MongoDB exitosamente.' });
+
+    try {
+        const nuevoReporte = new Reporte({
+            latitud: req.body.latitud,
+            longitud: req.body.longitud,
+            descripcion: req.body.descripcion
+        });
+        
+        await nuevoReporte.save(); 
+        
+        res.status(201).json({ mensaje: '¡Reporte validado y guardado exitosamente en MongoDB!' });
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        res.status(500).json({ mensaje: 'Error interno del servidor al guardar el reporte.' });
+    }
 });
 
 const PORT = process.env.PORT || 3000;
