@@ -134,6 +134,13 @@ app.post('/api/chat', async (req, res) => {
                 }
             ],
 
+            generationConfig: {
+                maxOutputTokens: 250,
+                thinkingConfig: {
+                    thinkingLevel: "LOW"
+    }
+}
+
         };
 
         // 4. Enviar solicitud a Gemini
@@ -146,7 +153,7 @@ app.post('/api/chat', async (req, res) => {
             },
 
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(30000)
+            signal: AbortSignal.timeout(60000)
         });
 
         const data = await response.json();
