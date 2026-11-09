@@ -5,15 +5,11 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
-// Importamos la librería de IA
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
 require('dotenv').config();
 
 const app = express();
 
-// Inicializamos Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+app.set('trust proxy', 1);
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Conectado a la Base de Datos en la Nube (MongoDB Atlas)'))
@@ -65,28 +61,45 @@ app.post('/api/reportes', [
     }
 });
 
-// ENDPOINT DEL CHATBOT CON IA
+// ENDPOINT DEL CHATBOT CON IA (Usando Fetch estándar)
 app.post('/api/chat', async (req, res) => {
     try {
         const { mensaje } = req.body;
+        const apiKey = process.env.GEMINI_API_KEY;
         
-        // Configuramos el modelo y el "System Prompt" (las reglas del bot)
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-pro",
-            systemInstruction: "Eres I.G.N.I.S. IA, un asistente experto en gestión de incendios forestales y emergencias en Chile. Tu objetivo es dar instrucciones de evacuación, primeros auxilios y mantener la calma. Responde de forma MUY breve y directa, máximo 2 o 3 oraciones. Si te preguntan cosas no relacionadas a emergencias, responde que solo puedes ayudar en casos de emergencia."
+        // URL directa a la API 
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        // El System Prompt y la estructura exacta que pide Google por HTTP
+        const payload = {
+            system_instruction: {
+                parts: [{ text: "Eres I.G.N.I.S. IA, un asistente experto en gestión de incendios forestales y emergencias en Chile. Tu objetivo es dar instrucciones de evacuación, primeros auxilios y mantener la calma. Responde de forma MUY breve y directa, máximo 2 o 3 oraciones. Si te preguntan cosas no relacionadas a emergencias, responde que solo puedes ayudar en casos de emergencia." }]
+            },
+            contents: [{
+                parts: [{ text: mensaje }]
+            }]
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
-        const result = await model.generateContent(mensaje);
-        const response = await result.response;
+        const data = await response.json();
+
+        // Validamos que Google haya enviado una respuesta correcta
+        if (!response.ok) {
+            console.error("Error de la API de Google:", data);
+            return res.status(500).json({ respuesta: 'Error conectando con los servidores de emergencia.' });
+        }
+
+        // Extraemos el texto de la respuesta de la estructura JSON
+        const respuestaIA = data.candidates[0].content.parts[0].text;
         
-        res.status(200).json({ respuesta: response.text() });
+        res.status(200).json({ respuesta: respuestaIA });
     } catch (error) {
-        console.error("Error en la IA:", error);
+        console.error("Error en el servidor al consultar IA:", error);
         res.status(500).json({ respuesta: 'No me pude conectar a los servidores de emergencia. Intenta de nuevo.' });
     }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor I.G.N.I.S. corriendo seguro en el puerto ${PORT}`);
 });
