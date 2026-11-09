@@ -67,7 +67,7 @@ app.post('/api/chat', async (req, res) => {
         const url = 'https://api.groq.com/openai/v1/chat/completions';
 
         const payload = {
-            model: "llama3-8b-8192", // Modelo ultra rápido, gratis y estable
+            model: "llama-3.1-8b-instant",
             messages: [
                 { 
                     role: "system", 
