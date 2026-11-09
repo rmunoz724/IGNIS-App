@@ -72,7 +72,7 @@ app.post('/api/chat', async (req, res) => {
         
         // Configuramos el modelo y el "System Prompt" (las reglas del bot)
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-pro",
             systemInstruction: "Eres I.G.N.I.S. IA, un asistente experto en gestión de incendios forestales y emergencias en Chile. Tu objetivo es dar instrucciones de evacuación, primeros auxilios y mantener la calma. Responde de forma MUY breve y directa, máximo 2 o 3 oraciones. Si te preguntan cosas no relacionadas a emergencias, responde que solo puedes ayudar en casos de emergencia."
         });
 
