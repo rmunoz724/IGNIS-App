@@ -32,6 +32,17 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// RUTA PARA OBTENER LOS REPORTES Y MOSTRARLOS EN EL MAPA
+app.get('/api/reportes', async (req, res) => {
+    try {
+        const listaReportes = await Reporte.find().sort({ fecha: -1 }).limit(50);
+        res.status(200).json(listaReportes);
+    } catch (error) {
+        console.error("Error al obtener reportes:", error);
+        res.status(500).json({ mensaje: 'Error interno al cargar el mapa.' });
+    }
+});
+
 app.post('/api/reportes', [
     body('latitud').isFloat({ min: -90, max: 90 }).withMessage('Latitud inválida'),
     body('longitud').isFloat({ min: -180, max: 180 }).withMessage('Longitud inválida'),
