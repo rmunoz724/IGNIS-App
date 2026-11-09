@@ -96,7 +96,7 @@ app.post('/api/chat', async (req, res) => {
                 parts: [{
                     text: `Eres I.G.N.I.S. IA, el asistente virtual de
                     una aplicación chilena de reporte y seguimiento de
-                    incendios forestales y emergencias.
+                    incendios y emergencias.
 
                     Tus funciones son:
                     - Orientar a las personas ante emergencias.
@@ -144,18 +144,25 @@ app.post('/api/chat', async (req, res) => {
         };
 
         // 4. Enviar solicitud a Gemini
+        console.log('[CHAT] Enviando solicitud a Gemini:', new Date().toISOString());
+
+        const inicio = Date.now();
+
         const response = await fetch(url, {
             method: 'POST',
-
             headers: {
                 'Content-Type': 'application/json',
                 'x-goog-api-key': apiKey
             },
-
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(60000)
+            signal: AbortSignal.timeout(90000)
         });
 
+        console.log('[CHAT] Respuesta recibida:', {
+            status: response.status,
+            tiempo: `${Date.now() - inicio} ms`
+        });
+        
         const data = await response.json();
 
         // 5. Manejar errores de Gemini
@@ -188,10 +195,14 @@ app.post('/api/chat', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en el chatbot:', error.message);
+        console.error('[CHAT] Error:', {
+            mensaje: error.message,
+            nombre: error.name,
+            tiempo: `${Date.now() - inicio} ms`
+        });
 
         res.status(500).json({
-            respuesta: 'No pude conectarme con el asistente. Intenta nuevamente.'
+            respuesta: 'El asistente está tardando demasiado. Intenta nuevamente.'
         });
     }
 });
