@@ -67,7 +67,7 @@ app.post('/api/chat', async (req, res) => {
         const url = 'https://api.groq.com/openai/v1/chat/completions';
 
         const payload = {
-            model: "llama-3.1-8b-instant",
+            model: "gemma2-9b-it",
             messages: [
                 { 
                     role: "system", 
