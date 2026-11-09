@@ -103,3 +103,9 @@ app.post('/api/chat', async (req, res) => {
         res.status(500).json({ respuesta: 'No me pude conectar a los servidores de emergencia. Intenta de nuevo.' });
     }
 });
+
+// --- ESTO DEBE IR AL FINAL DE TU server.js ---
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+    console.log(`Servidor I.G.N.I.S. corriendo seguro en el puerto ${PORT}`);
+});
