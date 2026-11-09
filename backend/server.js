@@ -62,10 +62,13 @@ app.post('/api/reportes', [
 // --- ENDPOINT DEL CHATBOT CON IA (GEMINI) ---
 
 app.post('/api/chat', async (req, res) => {
+    // 1. Declarar 'inicio' al principio para que exista en el bloque catch si algo falla
+    const inicio = Date.now(); 
+
     try {
         const { mensaje } = req.body;
 
-        // 1. Validar mensaje recibido
+        // 2. Validar mensaje recibido
         if (
             typeof mensaje !== 'string' ||
             mensaje.trim().length === 0 ||
@@ -76,20 +79,18 @@ app.post('/api/chat', async (req, res) => {
             });
         }
 
-        // 2. Obtener API Key desde variables de entorno
+        // 3. Obtener API Key desde variables de entorno
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
             console.error('No se encontró GEMINI_API_KEY.');
-
             return res.status(500).json({
                 respuesta: 'El servicio de IA no está configurado.'
             });
         }
 
-        // 3. Configurar solicitud a Gemini
-        const url =
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
+        // 4. URL apuntando correctamente a gemini-3.8-flash
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
         const payload = {
             systemInstruction: {
@@ -122,32 +123,25 @@ app.post('/api/chat', async (req, res) => {
                       el propósito de IGNIS.`
                 }]
             },
-
             contents: [
                 {
                     role: 'user',
                     parts: [
-                        {
-                            text: mensaje.trim()
-                        }
+                        { text: mensaje.trim() }
                     ]
                 }
             ],
-
             generationConfig: {
                 maxOutputTokens: 250,
                 thinkingConfig: {
                     thinkingLevel: "LOW"
-    }
-}
-
+                }
+            }
         };
 
-        // 4. Enviar solicitud a Gemini
         console.log('[CHAT] Enviando solicitud a Gemini:', new Date().toISOString());
 
-        const inicio = Date.now();
-
+        // 5. Enviar solicitud a Gemini
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -165,7 +159,7 @@ app.post('/api/chat', async (req, res) => {
         
         const data = await response.json();
 
-        // 5. Manejar errores de Gemini
+        // 6. Manejar errores de Gemini
         if (!response.ok) {
             console.error('Error de Gemini:', {
                 status: response.status,
@@ -177,7 +171,7 @@ app.post('/api/chat', async (req, res) => {
             });
         }
 
-        // 6. Extraer respuesta generada
+        // 7. Extraer respuesta generada
         const respuestaIA = data.candidates?.[0]?.content?.parts
             ?.map(part => part.text || '')
             .join('')
@@ -189,7 +183,7 @@ app.post('/api/chat', async (req, res) => {
             });
         }
 
-        // 7. Devolver respuesta al frontend
+        // 8. Devolver respuesta al frontend
         res.status(200).json({
             respuesta: respuestaIA
         });
@@ -205,10 +199,4 @@ app.post('/api/chat', async (req, res) => {
             respuesta: 'El asistente está tardando demasiado. Intenta nuevamente.'
         });
     }
-});
-
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`Servidor I.G.N.I.S. corriendo seguro en el puerto ${PORT}`);
 });
