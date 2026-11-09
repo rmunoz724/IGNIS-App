@@ -61,49 +61,38 @@ app.post('/api/reportes', [
     }
 });
 
-// ENDPOINT DEL CHATBOT CON IA (DEEPSEEK)
+// --- ENDPOINT DEL CHATBOT CON IA (GEMINI V1BETA - HTTP FETCH) ---
 app.post('/api/chat', async (req, res) => {
     try {
         const { mensaje } = req.body;
-        const apiKey = process.env.DEEPSEEK_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
         
-        // URL oficial de la API de DeepSeek
-        const url = 'https://api.deepseek.com/chat/completions';
+        // Usamos gemini-1.5-flash-latest, que es el alias que Google mantiene siempre activo
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
-        // Estructura universal estandarizada
         const payload = {
-            model: "deepseek-chat",
-            messages: [
-                { 
-                    role: "system", 
-                    content: "Eres I.G.N.I.S. IA, un asistente experto en gestión de incendios forestales y emergencias en Chile. Tu objetivo es dar instrucciones de evacuación, primeros auxilios y mantener la calma. Responde de forma MUY breve y directa, máximo 2 o 3 oraciones. Si te preguntan cosas no relacionadas a emergencias, responde que solo puedes ayudar en casos de emergencia." 
-                },
-                { 
-                    role: "user", 
-                    content: mensaje 
-                }
-            ],
-            temperature: 0.3 // Temperatura baja para respuestas precisas y sin rodeos en emergencias
+            system_instruction: {
+                parts: [{ text: "Eres I.G.N.I.S. IA, un asistente experto en gestión de incendios forestales y emergencias en Chile. Tu objetivo es dar instrucciones de evacuación, primeros auxilios y mantener la calma. Responde de forma MUY breve y directa, máximo 2 o 3 oraciones. Si te preguntan cosas no relacionadas a emergencias, responde que solo puedes ayudar en casos de emergencia." }]
+            },
+            contents: [{
+                parts: [{ text: mensaje }]
+            }]
         };
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("Error de la API de DeepSeek:", data);
+            console.error("Error de la API de Google:", data);
             return res.status(500).json({ respuesta: 'Error conectando con los servidores de emergencia.' });
         }
 
-        // Extracción limpia de la respuesta del bot
-        const respuestaIA = data.choices[0].message.content;
+        const respuestaIA = data.candidates[0].content.parts[0].text;
         
         res.status(200).json({ respuesta: respuestaIA });
     } catch (error) {
