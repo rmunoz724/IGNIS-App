@@ -89,7 +89,7 @@ app.post('/api/chat', async (req, res) => {
 
         // 3. Configurar solicitud a Gemini
         const url =
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
         const payload = {
             systemInstruction: {
@@ -134,9 +134,6 @@ app.post('/api/chat', async (req, res) => {
                 }
             ],
 
-            generationConfig: {
-                temperature: 0.3
-            }
         };
 
         // 4. Enviar solicitud a Gemini
